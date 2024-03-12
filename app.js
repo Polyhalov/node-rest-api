@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import mongoose from 'mongoose';
+import 'dotenv/config';
 
 import contactsRouter from "./routes/contactsRouter.js";
 
@@ -21,7 +22,7 @@ app.use((err, req, res, next) => {
   const { status = 500, message = "Server error" } = err;
   res.status(status).json({ message });
 });
-const DB_HOST ="mongodb+srv://Andrii:uSGa6NQhxVGQsu8w@cluster0.3ojfqnt.mongodb.net/my_contacts?retryWrites=true&w=majority&appName=Cluster0"
+const { DB_HOST } = process.env;
 mongoose.connect(DB_HOST)
   .then(() => { app.listen(3000, () => console.log('Database connection successful')) })
   .catch(error => {
