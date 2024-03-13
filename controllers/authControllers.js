@@ -42,6 +42,7 @@ export const login = async (req, res, next) => {
             id: user._id,
         }
         const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '23h' });
+        await User.findByIdAndUpdate(user._id, { token });
         res.json({
             token:token,
             user: {
@@ -53,3 +54,26 @@ export const login = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getCurrent = async (req, res, next) => {
+    try {
+        const { email, subscription } = req.user;
+        res.json({
+            email,
+            subscription,
+        })
+    } catch (error) {
+        next(error)
+    }
+};
+export const logout = async (req, res, next) => {
+    try {
+        const { _id } = req.user;
+        await User.findByIdAndUpdate(_id,{ token: '' });
+        res.status(200).json({
+            message: 'Logout succes'
+        })
+    } catch (error) {
+        next(error)
+    }
+}
