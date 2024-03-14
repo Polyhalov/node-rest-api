@@ -2,6 +2,16 @@ import { User } from "../db/user.js";
 import HttpError from "../helpers/HttpError.js";
 import bcrypt from "bcrypt";
 import jwt from 'jsonwebtoken';
+import gravatar from 'gravatar'
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs/promises';
+import jimp from 'jimp';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const avatarDir = path.join(__dirname, '../', 'public', 'avatars');
 
 const { SECRET_KEY } = process.env;
 
@@ -14,8 +24,9 @@ export const register = async (req, res, next) => {
             throw HttpError(409, `Email: ${email} already in use`)
         }
         const hashPassword = await bcrypt.hash(password, 10);
+        const avatarURL = gravatar.url(email);
 
-      const newUser = await User.create({...req.body, password:hashPassword});
+      const newUser = await User.create({...req.body, password:hashPassword, avatarURL});
         res.status(201).json({
           user:{email: newUser.email,
           subscription: newUser.subscription,}
@@ -72,6 +83,32 @@ export const logout = async (req, res, next) => {
         await User.findByIdAndUpdate(_id,{ token: '' });
         res.status(200).json({
             message: 'Logout succes'
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const updateAvatar = async (req, res, next) => {
+    try {
+        const { _id } = req.user;
+        const { path: tempUpload, originalname } = req.file;
+        const filename = `${_id}_${originalname}`;
+        const resultUpload = path.join(avatarDir, filename);
+        await fs.rename(tempUpload, resultUpload);
+        await jimp.read(`${resultUpload}`)
+            .then((image) => {
+                return image
+                    .resize(250, 250)
+                    .write(`${resultUpload}`)
+            })
+            .catch((err) => {
+                console.error(err);
+            });
+        const avatarURL = path.join('avatars', filename);
+        await User.findByIdAndUpdate(_id, { avatarURL })
+        res.json({
+            avatarURL,
         })
     } catch (error) {
         next(error)
