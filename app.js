@@ -27,7 +27,7 @@ app.use((err, req, res, next) => {
   res.status(status).json({ message });
 });
 
-const { DB_HOST, PORT=3000 } = process.env;
+const { DB_HOST, PORT = 3000 } = process.env;
 
 mongoose.connect(DB_HOST)
   .then(() => { app.listen(PORT, () => console.log('Database connection successful')) })
